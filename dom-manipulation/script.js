@@ -42,7 +42,7 @@
   }
 
   function updateCategoryPills() {
-    const container = $("#categoryControls");
+    const container = document.getElementById("categoryControls");
     container.innerHTML = "";
     for (const category of getCategories()) {
       container.appendChild(createCategoryPill(category));
@@ -54,7 +54,7 @@
   }
 
   function showRandomQuote() {
-    const display = $("#quoteDisplay");
+    const display = document.getElementById("quoteDisplay");
     const pool = activeCategory === "all"
       ? quotes
       : quotes.filter(q => q.category.toLowerCase() === activeCategory.toLowerCase());
@@ -69,11 +69,11 @@
   }
 
   function createAddQuoteForm() {
-    const form = $("#addQuoteForm");
+    const form = document.getElementById("addQuoteForm");
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      const textInput = $("#newQuoteText");
-      const categoryInput = $("#newQuoteCategory");
+      const textInput = document.getElementById("newQuoteText");
+      const categoryInput = document.getElementById("newQuoteCategory");
 
       const text = textInput.value.trim();
       const category = categoryInput.value.trim();
@@ -99,7 +99,7 @@
     updateCategoryPills();
     showRandomQuote();
 
-    const newQuoteButton = $("#newQuote");
+    const newQuoteButton = document.getElementById("newQuote");
     newQuoteButton.addEventListener("click", showRandomQuote);
 
     createAddQuoteForm();
