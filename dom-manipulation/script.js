@@ -13,6 +13,7 @@
   let activeCategory = "all";
   const LOCAL_STORAGE_KEY = "dqg_quotes_v1";
   const SESSION_LAST_QUOTE_KEY = "dqg_last_quote_v1";
+  const SELECTED_CATEGORY_KEY = "dqg_selected_category_v1";
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -33,6 +34,20 @@
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(quotes));
     } catch (_) {
       // ignore quota or serialization errors
+    }
+  }
+
+  function safeSetLocal(key, value) {
+    try {
+      localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+    } catch (_) {}
+  }
+
+  function safeGetLocal(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -82,6 +97,40 @@
       const isActive = btn.getAttribute("data-category") === activeCategory;
       btn.setAttribute("aria-pressed", String(isActive));
     });
+  }
+
+  function populateCategories() {
+    const select = document.getElementById("categoryFilter");
+    if (!select) return;
+    const categories = getCategories();
+    const previousValue = select.value;
+    select.innerHTML = "";
+
+    for (const category of categories) {
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = capitalize(category);
+      select.appendChild(option);
+    }
+
+    const stored = safeGetLocal(SELECTED_CATEGORY_KEY);
+    const preferred = stored || previousValue || activeCategory || "all";
+    if (categories.includes(preferred)) {
+      select.value = preferred;
+      activeCategory = preferred;
+    } else {
+      select.value = "all";
+      activeCategory = "all";
+    }
+  }
+
+  function filterQuotes() {
+    const select = document.getElementById("categoryFilter");
+    if (!select) return;
+    activeCategory = select.value || "all";
+    safeSetLocal(SELECTED_CATEGORY_KEY, activeCategory);
+    updateCategoryPills();
+    showRandomQuote();
   }
 
   function showRandomQuote() {
@@ -134,6 +183,7 @@
   function addQuote(newQuote) {
     quotes.push({ text: newQuote.text, category: newQuote.category });
     saveQuotes();
+    populateCategories();
   }
 
   function exportQuotesToJson() {
@@ -171,6 +221,7 @@
         quotes.push(...sanitized);
         saveQuotes();
         updateCategoryPills();
+        populateCategories();
         showRandomQuote();
         alert("Quotes imported successfully!");
       } catch (err) {
@@ -184,7 +235,10 @@
 
   function init() {
     loadQuotes();
+    const storedCategory = safeGetLocal(SELECTED_CATEGORY_KEY);
+    if (storedCategory) activeCategory = storedCategory;
     updateCategoryPills();
+    populateCategories();
     // Try to restore last viewed quote for the session
     try {
       const raw = sessionStorage.getItem(SESSION_LAST_QUOTE_KEY);
@@ -211,6 +265,9 @@
 
     const importInput = document.getElementById("importFile");
     if (importInput) importInput.addEventListener("change", handleImportFileChange);
+
+    const categorySelect = document.getElementById("categoryFilter");
+    if (categorySelect) categorySelect.addEventListener("change", filterQuotes);
 
     createAddQuoteForm();
   }
