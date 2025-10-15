@@ -14,6 +14,8 @@
   const LOCAL_STORAGE_KEY = "dqg_quotes_v1";
   const SESSION_LAST_QUOTE_KEY = "dqg_last_quote_v1";
   const SELECTED_CATEGORY_KEY = "dqg_selected_category_v1";
+  const SERVER_ENDPOINT = "https://jsonplaceholder.typicode.com/posts"; // mock source
+  const SYNC_INTERVAL_MS = 30000;
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -269,7 +271,82 @@
     const categorySelect = document.getElementById("categoryFilter");
     if (categorySelect) categorySelect.addEventListener("change", filterQuotes);
 
+    const syncButton = document.getElementById("syncNow");
+    if (syncButton) syncButton.addEventListener("click", syncFromServer);
+
+    // Periodic sync
+    setInterval(syncFromServer, SYNC_INTERVAL_MS);
+
     createAddQuoteForm();
+  }
+
+  async function syncFromServer() {
+    setSyncStatus("Syncing with server...");
+    try {
+      const serverQuotes = await fetchServerQuotes();
+      const { merged, conflicts } = mergeServerQuotes(serverQuotes, quotes);
+      if (merged) {
+        quotes.splice(0, quotes.length, ...merged);
+        saveQuotes();
+        updateCategoryPills();
+        populateCategories();
+        showRandomQuote();
+      }
+      if (conflicts > 0) {
+        notifyConflict(conflicts);
+        setSyncStatus(`Sync complete with ${conflicts} conflict(s). Server version used.`);
+      } else {
+        setSyncStatus("Sync complete. Up to date.");
+      }
+    } catch (err) {
+      setSyncStatus("Sync failed. Check network and try again.");
+    }
+  }
+
+  async function fetchServerQuotes() {
+    const res = await fetch(SERVER_ENDPOINT);
+    if (!res.ok) throw new Error("Failed to fetch server data");
+    const posts = await res.json();
+    // Map first 10 posts to quotes; title as text, category as 'server'
+    return posts.slice(0, 10).map(p => ({
+      text: String(p.title || "").trim(),
+      category: "server"
+    })).filter(isValidQuote);
+  }
+
+  function mergeServerQuotes(serverQuotes, localQuotes) {
+    // Server precedence: by normalized text key; server overwrites local on conflict
+    const normalize = q => (q.text || "").trim().toLowerCase();
+    const map = new Map();
+    let conflicts = 0;
+
+    for (const q of localQuotes) {
+      const key = normalize(q);
+      if (!key) continue;
+      map.set(key, { text: q.text, category: q.category });
+    }
+
+    for (const sq of serverQuotes) {
+      const key = normalize(sq);
+      if (!key) continue;
+      if (map.has(key)) {
+        const existing = map.get(key);
+        if (existing.category !== sq.category) conflicts += 1;
+      }
+      map.set(key, { text: sq.text, category: sq.category });
+    }
+
+    return { merged: Array.from(map.values()), conflicts };
+  }
+
+  function setSyncStatus(message) {
+    const el = document.getElementById("syncStatus");
+    if (el) el.textContent = message;
+  }
+
+  function notifyConflict(count) {
+    // Non-blocking: also place a message in the status area
+    try { alert(`${count} conflict(s) resolved in favor of server data.`); } catch (_) {}
   }
 
   if (document.readyState === "loading") {

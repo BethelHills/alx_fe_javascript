@@ -33,7 +33,10 @@
     <button id="exportJson" type="button">Export Quotes (JSON)</button>
     <label class="pill" for="importFile">Import Quotes (JSON)</label>
     <input id="importFile" type="file" accept=".json" style="display:none" />
+    <button id="syncNow" type="button">Sync Now</button>
   </div>
+
+  <div id="syncStatus" aria-live="polite" style="margin-top:.5rem;color:#555"></div>
 
   <section aria-labelledby="add-quote-heading">
     <h2 id="add-quote-heading" class="sr-only">Add a new quote</h2>
