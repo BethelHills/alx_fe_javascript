@@ -299,7 +299,7 @@
         notifyConflict(conflicts);
         setSyncStatus(`Sync complete with ${conflicts} conflict(s). Server version used.`);
       } else {
-        setSyncStatus("Sync complete. Up to date.");
+        setSyncStatus("Quotes synced with server!");
       }
     } catch (err) {
       setSyncStatus("Sync failed. Check network and try again.");
