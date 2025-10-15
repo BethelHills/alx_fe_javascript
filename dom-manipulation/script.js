@@ -10,7 +10,7 @@
     { text: "First, solve the problem. Then, write the code.", category: "programming" }
   ];
 
-  let activeCategory = "all";
+  let selectedCategory = "all";
   const LOCAL_STORAGE_KEY = "dqg_quotes_v1";
   const SESSION_LAST_QUOTE_KEY = "dqg_last_quote_v1";
   const SELECTED_CATEGORY_KEY = "dqg_selected_category_v1";
@@ -78,9 +78,9 @@
     button.className = "pill";
     button.textContent = category;
     button.setAttribute("data-category", category);
-    button.setAttribute("aria-pressed", String(category === activeCategory));
+    button.setAttribute("aria-pressed", String(category === selectedCategory));
     button.addEventListener("click", () => {
-      activeCategory = category;
+      selectedCategory = category;
       updateCategoryPills();
       showRandomQuote();
     });
@@ -94,7 +94,7 @@
       container.appendChild(createCategoryPill(category));
     }
     $$(".pill", container).forEach(btn => {
-      const isActive = btn.getAttribute("data-category") === activeCategory;
+      const isActive = btn.getAttribute("data-category") === selectedCategory;
       btn.setAttribute("aria-pressed", String(isActive));
     });
   }
@@ -114,30 +114,30 @@
     }
 
     const stored = safeGetLocal(SELECTED_CATEGORY_KEY);
-    const preferred = stored || previousValue || activeCategory || "all";
+    const preferred = stored || previousValue || selectedCategory || "all";
     if (categories.includes(preferred)) {
       select.value = preferred;
-      activeCategory = preferred;
+      selectedCategory = preferred;
     } else {
       select.value = "all";
-      activeCategory = "all";
+      selectedCategory = "all";
     }
   }
 
   function filterQuotes() {
     const select = document.getElementById("categoryFilter");
     if (!select) return;
-    activeCategory = select.value || "all";
-    safeSetLocal(SELECTED_CATEGORY_KEY, activeCategory);
+    selectedCategory = select.value || "all";
+    safeSetLocal(SELECTED_CATEGORY_KEY, selectedCategory);
     updateCategoryPills();
     showRandomQuote();
   }
 
   function showRandomQuote() {
     const display = document.getElementById("quoteDisplay");
-    const pool = activeCategory === "all"
+    const pool = selectedCategory === "all"
       ? quotes
-      : quotes.filter(q => q.category.toLowerCase() === activeCategory.toLowerCase());
+      : quotes.filter(q => q.category.toLowerCase() === selectedCategory.toLowerCase());
 
     const picked = pickRandom(pool);
     if (picked) {
@@ -236,7 +236,7 @@
   function init() {
     loadQuotes();
     const storedCategory = safeGetLocal(SELECTED_CATEGORY_KEY);
-    if (storedCategory) activeCategory = storedCategory;
+    if (storedCategory) selectedCategory = storedCategory;
     updateCategoryPills();
     populateCategories();
     // Try to restore last viewed quote for the session
