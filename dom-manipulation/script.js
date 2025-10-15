@@ -283,6 +283,9 @@
   async function syncFromServer() {
     setSyncStatus("Syncing with server...");
     try {
+      // Push local snapshot to mock server (fire-and-forget semantics)
+      try { await postQuotesToServer(quotes); } catch (_) {}
+
       const serverQuotes = await fetchServerQuotes();
       const { merged, conflicts } = mergeServerQuotes(serverQuotes, quotes);
       if (merged) {
@@ -317,6 +320,18 @@
   // Backwards compatibility with expected naming in tests/checks
   async function fetchQuotesFromServer() {
     return fetchServerQuotes();
+  }
+
+  async function postQuotesToServer(quotesPayload) {
+    const res = await fetch(SERVER_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ quotes: quotesPayload })
+    });
+    if (!res.ok) throw new Error("Failed to post data to server");
+    return res.json();
   }
 
   function mergeServerQuotes(serverQuotes, localQuotes) {
