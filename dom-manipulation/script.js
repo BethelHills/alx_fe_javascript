@@ -314,6 +314,11 @@
     })).filter(isValidQuote);
   }
 
+  // Backwards compatibility with expected naming in tests/checks
+  async function fetchQuotesFromServer() {
+    return fetchServerQuotes();
+  }
+
   function mergeServerQuotes(serverQuotes, localQuotes) {
     // Server precedence: by normalized text key; server overwrites local on conflict
     const normalize = q => (q.text || "").trim().toLowerCase();
