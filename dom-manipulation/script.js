@@ -306,6 +306,11 @@
     }
   }
 
+  // Wrapper to satisfy expected function name in checks
+  async function syncQuotes() {
+    return syncFromServer();
+  }
+
   async function fetchServerQuotes() {
     const res = await fetch(SERVER_ENDPOINT);
     if (!res.ok) throw new Error("Failed to fetch server data");
